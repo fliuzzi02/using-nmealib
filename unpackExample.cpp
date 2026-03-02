@@ -1,5 +1,5 @@
 #include <iostream>
-#include <nmealib/nmealib.hpp>
+#include <nmealib.h>
 
 int main() {
     // Example NMEA 0183 sentences to parse

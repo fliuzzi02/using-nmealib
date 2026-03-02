@@ -14,62 +14,20 @@ endif()
 include(FetchContent)
 
 # Fetch the pre-compiled nmealib binary release
-set(NMEALIB_VERSION "v0.2.1")
+set(NMEALIB_VERSION "0.3.1")
 FetchContent_Declare(
     nmealib
-    URL "https://github.com/fliuzzi02/nmealib/releases/download/${NMEALIB_VERSION}/nmealib-linux64.tar.gz"
-    URL_HASH SHA256=29dc85e1cebe5f67516770d9929a41e9c93997e0468c1a867094be49cde3dfc3
+    URL "https://github.com/fliuzzi02/nmealib/releases/download/v${NMEALIB_VERSION}/nmealib-${NMEALIB_VERSION}-linux64.tar.gz"
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(nmealib)
 
-# Create an interface target that exposes headers and only the used libraries.
-# The --start-group/--end-group linker flags (GNU ld) allow multiple passes
-# over the archive group to resolve cross-library dependencies.
-add_library(nmealib_nmea0183 INTERFACE)
-target_include_directories(nmealib_nmea0183 INTERFACE "${nmealib_SOURCE_DIR}/include")
-target_link_libraries(nmealib_nmea0183 INTERFACE
-    -Wl,--start-group
-    # Core library (NmeaException and base message interface)
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_core.a"
-    # NMEA 0183 support: base class, factory, and message registry
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_base.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_factory.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_registry.a"
-    # NMEA 0183 sentence types used in this project
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gga.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_rmc.a"
-    # Additional NMEA 0183 sentence types (required by the registry)
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gll.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gsa.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_vtg.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_zda.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_dbt.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_mwv.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_vhw.a"
-    # NMEA 2000 support (not used in this project; uncomment to enable)
-    # "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea2000_base.a"
-    # "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea2000_factory.a"
-    # "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea2000_registry.a"
-    -Wl,--end-group
-)
+# Add the nmealib cmake directory to the prefix path so find_package can locate it
+list(APPEND CMAKE_PREFIX_PATH "${nmealib_SOURCE_DIR}/lib/cmake")
 
-# In this example we only pack the necessary libraries for the used sentence types, which can be linked alone if only packing messages.
-add_library(nmealib_single INTERFACE)
-target_include_directories(nmealib_single INTERFACE "${nmealib_SOURCE_DIR}/include")
-target_link_libraries(nmealib_single INTERFACE
-    -Wl,--start-group
-    # Core library (NmeaException and base message interface)
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_core.a"
-    # NMEA 0183 support: base class, factory, and message registry
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_base.a"
-    # NMEA 0183 sentence types used in this project, can be linked alone if used only to pack messages
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gga.a"
-    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_rmc.a"
-)
+find_package(nmealib REQUIRED)
 
 add_executable(unpackExample unpackExample.cpp)
-target_link_libraries(unpackExample PRIVATE nmealib_nmea0183)
-
+target_link_libraries(unpackExample PRIVATE nmealib::nmealib)
 add_executable(packExample packExample.cpp)
-target_link_libraries(packExample PRIVATE nmealib_single)
+target_link_libraries(packExample PRIVATE nmealib::nmealib)

@@ -1,6 +1,6 @@
 #include <iostream>
-#include <nmealib/nmea0183/rmc.hpp>
-#include <nmealib/nmea0183/gga.hpp>
+#include <nmealib/nmea0183/rmc.h>
+#include <nmealib/nmea0183/gga.h>
 
 int main() {
     try {
