@@ -23,18 +23,34 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nmealib)
 
-# Collect all static libraries shipped with the release.
-# CONFIGURE_DEPENDS ensures CMake re-globs if the library files change.
-file(GLOB NMEALIB_LIBS CONFIGURE_DEPENDS "${nmealib_SOURCE_DIR}/lib/*.a")
-
-# Create an interface target that bundles headers and libraries.
+# Create an interface target that exposes headers and only the used libraries.
 # The --start-group/--end-group linker flags (GNU ld) allow multiple passes
 # over the archive group to resolve cross-library dependencies.
 add_library(nmealib_bundle INTERFACE)
 target_include_directories(nmealib_bundle INTERFACE "${nmealib_SOURCE_DIR}/include")
 target_link_libraries(nmealib_bundle INTERFACE
     -Wl,--start-group
-    ${NMEALIB_LIBS}
+    # Core library (NmeaException and base message interface)
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_core.a"
+    # NMEA 0183 support: base class, factory, and message registry
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_base.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_factory.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_registry.a"
+    # NMEA 0183 sentence types used in this project
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gga.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_rmc.a"
+    # Additional NMEA 0183 sentence types (required by the registry)
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gll.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gsa.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_vtg.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_zda.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_dbt.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_mwv.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_vhw.a"
+    # NMEA 2000 support (not used in this project; uncomment to enable)
+    # "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea2000_base.a"
+    # "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea2000_factory.a"
+    # "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea2000_registry.a"
     -Wl,--end-group
 )
 
