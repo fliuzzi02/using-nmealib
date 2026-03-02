@@ -26,9 +26,9 @@ FetchContent_MakeAvailable(nmealib)
 # Create an interface target that exposes headers and only the used libraries.
 # The --start-group/--end-group linker flags (GNU ld) allow multiple passes
 # over the archive group to resolve cross-library dependencies.
-add_library(nmealib_bundle INTERFACE)
-target_include_directories(nmealib_bundle INTERFACE "${nmealib_SOURCE_DIR}/include")
-target_link_libraries(nmealib_bundle INTERFACE
+add_library(nmealib_nmea0183 INTERFACE)
+target_include_directories(nmealib_nmea0183 INTERFACE "${nmealib_SOURCE_DIR}/include")
+target_link_libraries(nmealib_nmea0183 INTERFACE
     -Wl,--start-group
     # Core library (NmeaException and base message interface)
     "${nmealib_SOURCE_DIR}/lib/libnmealib_core.a"
@@ -54,5 +54,22 @@ target_link_libraries(nmealib_bundle INTERFACE
     -Wl,--end-group
 )
 
-add_executable(using-nmealib main.cpp)
-target_link_libraries(using-nmealib PRIVATE nmealib_bundle)
+# In this example we only pack the necessary libraries for the used sentence types, which can be linked alone if only packing messages.
+add_library(nmealib_single INTERFACE)
+target_include_directories(nmealib_single INTERFACE "${nmealib_SOURCE_DIR}/include")
+target_link_libraries(nmealib_single INTERFACE
+    -Wl,--start-group
+    # Core library (NmeaException and base message interface)
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_core.a"
+    # NMEA 0183 support: base class, factory, and message registry
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_base.a"
+    # NMEA 0183 sentence types used in this project, can be linked alone if used only to pack messages
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_gga.a"
+    "${nmealib_SOURCE_DIR}/lib/libnmealib_nmea0183_rmc.a"
+)
+
+add_executable(unpackExample unpackExample.cpp)
+target_link_libraries(unpackExample PRIVATE nmealib_nmea0183)
+
+add_executable(packExample packExample.cpp)
+target_link_libraries(packExample PRIVATE nmealib_single)
